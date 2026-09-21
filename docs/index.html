@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Monitor de Circulares ASFI</title>
+<meta name="color-scheme" content="light dark">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%2314284B'/%3E%3Cpath d='M9 8h10l4 4v12H9z' fill='none' stroke='white' stroke-width='2' stroke-linejoin='round'/%3E%3Cpath d='M12.5 17h7M12.5 21h5' stroke='white' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,500;6..72,600&family=Public+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F2F4F8; --surface:#FFFFFF; --surface-2:#F7F8FB;
+  --ink:#14284B; --texto:#1E2A3D; --suave:#566277;
+  --linea:#DAE0EA; --linea-fuerte:#B7C2D6;
+  --btn-bg:#14284B; --btn-fg:#FFFFFF; --enlace:#1B4B9B;
+  --ok:#1D7448; --ok-bg:#E2F2E9;
+  --err:#B3261E; --err-bg:#FBE8E6;
+  --aviso:#7A4B00; --aviso-bg:#FFF0D2; --aviso-linea:#E6BE74;
+  --foco:#2F6FE0;
+  --sombra:0 1px 2px rgba(20,40,75,.05), 0 14px 30px -18px rgba(20,40,75,.28);
+  --serif:"Newsreader", Georgia, "Times New Roman", serif;
+  --sans:"Public Sans", "Segoe UI", system-ui, -apple-system, Roboto, Arial, sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0B1322; --surface:#121D33; --surface-2:#0F192C;
+    --ink:#E9EEF8; --texto:#D3DBEA; --suave:#99A6BD;
+    --linea:#243250; --linea-fuerte:#34466B;
+    --btn-bg:#8FB3F2; --btn-fg:#0B1322; --enlace:#9DBDF5;
+    --ok:#5FD08F; --ok-bg:#12301F;
+    --err:#FF8A80; --err-bg:#3A1714;
+    --aviso:#F3C979; --aviso-bg:#33270D; --aviso-linea:#6B5220;
+    --foco:#7FB0FF;
+    --sombra:0 1px 2px rgba(0,0,0,.4), 0 14px 30px -18px rgba(0,0,0,.7);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0B1322; --surface:#121D33; --surface-2:#0F192C;
+  --ink:#E9EEF8; --texto:#D3DBEA; --suave:#99A6BD;
+  --linea:#243250; --linea-fuerte:#34466B;
+  --btn-bg:#8FB3F2; --btn-fg:#0B1322; --enlace:#9DBDF5;
+  --ok:#5FD08F; --ok-bg:#12301F;
+  --err:#FF8A80; --err-bg:#3A1714;
+  --aviso:#F3C979; --aviso-bg:#33270D; --aviso-linea:#6B5220;
+  --foco:#7FB0FF;
+  --sombra:0 1px 2px rgba(0,0,0,.4), 0 14px 30px -18px rgba(0,0,0,.7);
+}
+
+*,*::before,*::after{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0; background:var(--bg); color:var(--texto);
+  font-family:var(--sans); font-size:16px; line-height:1.55;
+  padding-left:env(safe-area-inset-left,0px); padding-right:env(safe-area-inset-right,0px);
+}
+a{color:var(--enlace)}
+:focus-visible{outline:3px solid var(--foco); outline-offset:2px; border-radius:4px}
+.wrap{max-width:1120px; margin:0 auto; padding:0 24px}
+[hidden]{display:none !important}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+/* Aviso de datos de ejemplo */
+.ejemplo{background:var(--aviso-bg); color:var(--aviso); border-bottom:1px solid var(--aviso-linea); font-size:.9rem}
+.ejemplo .wrap{display:flex; gap:12px; align-items:center; justify-content:space-between; padding-top:10px; padding-bottom:10px; flex-wrap:wrap}
+.ejemplo button{font:inherit; color:inherit; background:none; border:1px solid currentColor; border-radius:6px; padding:4px 12px; cursor:pointer}
+
+/* Encabezado */
+.top{background:var(--surface); border-bottom:1px solid var(--linea); padding-top:env(safe-area-inset-top,0px)}
+.top .wrap{display:flex; align-items:center; justify-content:space-between; gap:16px; padding-top:18px; padding-bottom:18px}
+.marca{display:flex; align-items:center; gap:14px; min-width:0}
+.marca svg{flex:none}
+.marca h1{margin:0; font-family:var(--serif); font-weight:600; font-size:1.45rem; line-height:1.15; color:var(--ink); letter-spacing:-.005em}
+.marca p{margin:2px 0 0; font-size:.86rem; color:var(--suave)}
+.tema{flex:none; width:40px; height:40px; display:grid; place-items:center; border-radius:8px; border:1px solid var(--linea-fuerte); background:transparent; color:var(--ink); cursor:pointer}
+.tema:hover{background:var(--surface-2)}
+.tema .luna{display:none}
+:root[data-theme="dark"] .tema .sol{display:none}
+:root[data-theme="dark"] .tema .luna{display:block}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]) .tema .sol{display:none}
+  :root:not([data-theme="light"]) .tema .luna{display:block}
+}
+
+main{padding:36px 0 56px}
+
+/* Carpeta de la circular más reciente */
+.carpeta{margin-bottom:44px}
+.pestana{
+  display:inline-block; padding:8px 18px 9px; margin-left:0;
+  background:var(--surface); border:1px solid var(--linea); border-bottom:none;
+  border-radius:10px 10px 0 0; font-size:.88rem; font-weight:500; color:var(--suave);
+  position:relative; top:1px;
+}
+.carpeta-cuerpo{
+  display:grid; grid-template-columns:minmax(0,1.7fr) minmax(260px,1fr);
+  background:var(--surface); border:1px solid var(--linea); border-radius:0 12px 12px 12px;
+  box-shadow:var(--sombra); overflow:hidden; border-top:4px solid var(--ink);
+}
+.ultima{padding:30px 34px 32px}
+.sello{
+  display:inline-block; margin-bottom:10px; padding:2px 10px; border-radius:999px;
+  background:var(--aviso-bg); color:var(--aviso); border:1px solid var(--aviso-linea);
+  font-size:.82rem; font-weight:600;
+}
+.codigo{
+  margin:0; font-family:var(--serif); font-weight:600; color:var(--ink);
+  font-size:clamp(2.4rem, 6.4vw, 4.4rem); line-height:1.02; letter-spacing:-.02em;
+  font-variant-numeric:lining-nums; overflow-wrap:anywhere;
+}
+.asunto{
+  margin:14px 0 0; max-width:60ch; font-family:var(--serif); font-size:1.32rem; line-height:1.38; color:var(--texto);
+}
+.datos-ultima{display:flex; flex-wrap:wrap; gap:6px 28px; margin:20px 0 0; padding:0}
+.datos-ultima div{display:flex; gap:8px}
+.datos-ultima dt{color:var(--suave); font-size:.9rem}
+.datos-ultima dd{margin:0; font-size:.9rem; font-weight:500; color:var(--texto)}
+.acciones{display:flex; flex-wrap:wrap; gap:10px; margin-top:26px}
+.btn{
+  display:inline-flex; align-items:center; gap:8px; padding:10px 16px; border-radius:7px;
+  border:1px solid var(--linea-fuerte); background:transparent; color:var(--ink);
+  font:inherit; font-size:.94rem; font-weight:600; text-decoration:none; cursor:pointer;
+}
+.btn:hover{background:var(--surface-2)}
+.btn.primario{background:var(--btn-bg); color:var(--btn-fg); border-color:var(--btn-bg)}
+.btn.primario:hover{filter:brightness(1.1); background:var(--btn-bg)}
+.btn[aria-disabled="true"]{opacity:.45; pointer-events:none}
+
+.estado{padding:28px 30px 30px; border-left:1px solid var(--linea); background:var(--surface-2)}
+.estado-cab{display:flex; align-items:center; gap:10px; margin:0 0 18px; font-weight:600; color:var(--ink)}
+.punto{width:10px; height:10px; border-radius:50%; background:var(--suave); flex:none}
+.estado[data-nivel="ok"] .punto{background:var(--ok); box-shadow:0 0 0 4px var(--ok-bg)}
+.estado[data-nivel="error"] .punto{background:var(--err); box-shadow:0 0 0 4px var(--err-bg)}
+.estado[data-nivel="aviso"] .punto{background:var(--aviso); box-shadow:0 0 0 4px var(--aviso-bg)}
+.estado dl{margin:0}
+.estado dl div{padding:10px 0; border-top:1px solid var(--linea)}
+.estado dt{font-size:.84rem; color:var(--suave)}
+.estado dd{margin:1px 0 0; font-weight:500; color:var(--texto); font-variant-numeric:tabular-nums}
+.estado .detalle-error{margin:14px 0 0; padding:10px 12px; border-radius:6px; background:var(--err-bg); color:var(--err); font-size:.88rem}
+
+.vacio-portada{padding:44px 34px; grid-column:1/-1}
+.vacio-portada h2{margin:0 0 8px; font-family:var(--serif); font-size:1.6rem; color:var(--ink)}
+.vacio-portada p{margin:0 0 18px; max-width:58ch; color:var(--suave)}
+
+/* Historial */
+.hist-cab{display:flex; align-items:flex-end; justify-content:space-between; gap:20px; flex-wrap:wrap; margin-bottom:16px}
+.hist-cab h2{margin:0; font-family:var(--serif); font-weight:600; font-size:1.7rem; color:var(--ink); letter-spacing:-.01em}
+.filtros{display:flex; gap:10px; flex-wrap:wrap}
+.campo{position:relative}
+.campo input,.campo select{
+  font:inherit; font-size:.94rem; color:var(--texto); background:var(--surface);
+  border:1px solid var(--linea-fuerte); border-radius:7px; height:42px; padding:0 12px;
+}
+.campo input{padding-left:38px; width:300px; max-width:100%}
+.campo svg{position:absolute; left:12px; top:12px; color:var(--suave); pointer-events:none}
+.tabla-caja{background:var(--surface); border:1px solid var(--linea); border-radius:12px; overflow:hidden; box-shadow:var(--sombra)}
+.tabla-scroll{overflow-x:auto}
+table{width:100%; border-collapse:collapse; min-width:680px}
+thead th{
+  text-align:left; font-size:.85rem; font-weight:600; color:var(--suave);
+  padding:12px 20px; border-bottom:1px solid var(--linea-fuerte); background:var(--surface-2); white-space:nowrap;
+}
+tbody td{padding:15px 20px; border-bottom:1px solid var(--linea); vertical-align:top}
+tbody tr:last-child td{border-bottom:none}
+tbody tr:hover td{background:var(--surface-2)}
+td.c-codigo{white-space:nowrap}
+.num{font-family:var(--serif); font-weight:600; font-size:1.22rem; color:var(--ink); font-variant-numeric:lining-nums}
+.mini{display:inline-block; margin-left:8px; padding:0 8px; border-radius:999px; background:var(--aviso-bg); color:var(--aviso); border:1px solid var(--aviso-linea); font-size:.74rem; font-weight:600; vertical-align:3px}
+td.c-fecha{white-space:nowrap; color:var(--suave); font-size:.92rem; font-variant-numeric:tabular-nums}
+td.c-asunto{max-width:520px}
+td.c-asunto .fuente{display:block; margin-top:2px; font-size:.82rem; color:var(--suave)}
+td.c-pdf{text-align:right; white-space:nowrap}
+.enlace-pdf{display:inline-flex; align-items:center; gap:6px; font-weight:600; font-size:.9rem; text-decoration:none; padding:6px 10px; border-radius:6px; border:1px solid var(--linea-fuerte); color:var(--ink)}
+.enlace-pdf:hover{background:var(--surface-2)}
+.enlace-pdf[aria-disabled="true"]{opacity:.45; pointer-events:none}
+.tabla-pie{display:flex; align-items:center; justify-content:space-between; gap:12px; padding:14px 20px; border-top:1px solid var(--linea); font-size:.9rem; color:var(--suave); flex-wrap:wrap}
+.vacio-tabla{padding:40px 20px; text-align:center; color:var(--suave)}
+
+/* Información inferior */
+.info{display:grid; grid-template-columns:1fr 1.3fr; gap:44px; margin-top:52px}
+.info h2{margin:0 0 14px; font-family:var(--serif); font-weight:600; font-size:1.35rem; color:var(--ink)}
+.lista-dest{list-style:none; margin:0; padding:0}
+.lista-dest li{display:flex; align-items:center; gap:12px; padding:11px 0; border-top:1px solid var(--linea); font-variant-numeric:tabular-nums}
+.lista-dest li:last-child{border-bottom:1px solid var(--linea)}
+.lista-dest svg{color:var(--suave); flex:none}
+.nota-info{margin:12px 0 0; font-size:.88rem; color:var(--suave)}
+.pasos{list-style:none; margin:0; padding:0; counter-reset:paso}
+.pasos li{counter-increment:paso; display:grid; grid-template-columns:34px 1fr; gap:4px 14px; padding:12px 0; border-top:1px solid var(--linea)}
+.pasos li:last-child{border-bottom:1px solid var(--linea)}
+.pasos li::before{content:counter(paso); grid-row:1 / span 2; width:28px; height:28px; border-radius:50%; border:1px solid var(--linea-fuerte); display:grid; place-items:center; font-weight:600; font-size:.88rem; color:var(--ink)}
+.pasos strong{color:var(--ink); font-weight:600}
+.pasos span{color:var(--suave); font-size:.94rem}
+
+footer{border-top:1px solid var(--linea); padding:22px 0 calc(28px + env(safe-area-inset-bottom,0px)); color:var(--suave); font-size:.86rem}
+footer p{margin:0; max-width:78ch}
+
+@media (max-width:860px){
+  .carpeta-cuerpo{grid-template-columns:1fr}
+  .estado{border-left:none; border-top:1px solid var(--linea)}
+  .info{grid-template-columns:1fr; gap:36px}
+  .ultima{padding:24px 22px 26px}
+}
+@media (max-width:720px){
+  .wrap{padding:0 16px}
+  .marca p{display:none}
+  .campo input{width:100%}
+  .filtros{width:100%}
+  .filtros .campo:first-child{flex:1 1 100%}
+  table{min-width:0}
+  thead{position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0)}
+  tbody tr{display:grid; grid-template-columns:1fr auto; gap:4px 12px; padding:14px 16px; border-bottom:1px solid var(--linea)}
+  tbody tr:last-child{border-bottom:none}
+  tbody td{display:block; padding:0; border:none}
+  tbody tr:hover td{background:transparent}
+  td.c-codigo{grid-column:1; grid-row:1}
+  td.c-pdf{grid-column:2; grid-row:1 / span 2; align-self:center}
+  td.c-fecha{grid-column:1; grid-row:2}
+  td.c-asunto{grid-column:1 / -1; grid-row:3; max-width:none}
+}
+@media (prefers-reduced-motion: no-preference){
+  .estado[data-nivel="ok"] .punto{animation:latido 2.6s ease-out 1}
+  @keyframes latido{0%{box-shadow:0 0 0 0 var(--ok)}60%{box-shadow:0 0 0 8px transparent}100%{box-shadow:0 0 0 4px var(--ok-bg)}}
+}
+</style>
+</head>
+<body>
+
+<div class="ejemplo" id="aviso-ejemplo" hidden>
+  <div class="wrap">
+    <span><strong>Datos de ejemplo.</strong> Estas circulares son ficticias y sirven solo para ver cómo se verá el panel.</span>
+    <button type="button" id="salir-ejemplo">Ocultar ejemplo</button>
+  </div>
+</div>
+
+<header class="top">
+  <div class="wrap">
+    <div class="marca">
+      <svg width="40" height="40" viewBox="0 0 40 40" aria-hidden="true"><rect width="40" height="40" rx="8" fill="var(--ink)"/><path d="M12 10h12l5 5v15H12z" fill="none" stroke="var(--surface)" stroke-width="2.2" stroke-linejoin="round"/><path d="M16 21h9M16 26h6" stroke="var(--surface)" stroke-width="2.2" stroke-linecap="round"/></svg>
+      <div>
+        <h1>Monitor de Circulares ASFI</h1>
+        <p>Autoridad de Supervisión del Sistema Financiero de Bolivia</p>
+      </div>
+    </div>
+    <button class="tema" id="tema" type="button" aria-label="Cambiar entre tema claro y oscuro" title="Cambiar tema">
+      <svg class="sol" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+      <svg class="luna" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+    </button>
+  </div>
+</header>
+
+<main>
+  <div class="wrap">
+
+    <section class="carpeta" aria-label="Circular más reciente y estado del monitor">
+      <div class="pestana">Circular más reciente</div>
+      <div class="carpeta-cuerpo" id="portada"></div>
+    </section>
+
+    <section aria-labelledby="t-hist">
+      <div class="hist-cab">
+        <h2 id="t-hist">Historial de circulares</h2>
+        <div class="filtros">
+          <div class="campo">
+            <label class="sr" for="buscar">Buscar por número o asunto</label>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+            <input id="buscar" type="search" placeholder="Buscar circular o asunto" autocomplete="off">
+          </div>
+          <div class="campo">
+            <label class="sr" for="filtro-anio">Año</label>
+            <select id="filtro-anio"><option value="">Todos los años</option></select>
+          </div>
+          <div class="campo" id="campo-fuente" hidden>
+            <label class="sr" for="filtro-fuente">Fuente</label>
+            <select id="filtro-fuente"><option value="">Todas las fuentes</option></select>
+          </div>
+        </div>
+      </div>
+      <div class="tabla-caja">
+        <div class="tabla-scroll" role="region" aria-label="Tabla de circulares" tabindex="0">
+          <table>
+            <thead><tr><th scope="col">Circular</th><th scope="col">Fecha de emisión</th><th scope="col">Asunto</th><th scope="col"><span class="sr">Documento</span></th></tr></thead>
+            <tbody id="filas"></tbody>
+          </table>
+        </div>
+        <div class="tabla-pie" id="tabla-pie">
+          <span id="conteo" aria-live="polite"></span>
+          <button type="button" class="btn" id="mas" hidden>Mostrar 20 más</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="info">
+      <div>
+        <h2>Destinatarios</h2>
+        <ul class="lista-dest" id="destinatarios"></ul>
+        <p class="nota-info" id="nota-dest"></p>
+      </div>
+      <div>
+        <h2>Cómo funciona</h2>
+        <ol class="pasos">
+          <li><strong>Revisa el sitio de ASFI</strong><span id="txt-frecuencia">Varias veces al día en horario laboral.</span></li>
+          <li><strong>Descarga la circular nueva</strong><span>Guarda el PDF y registra número, fecha y asunto en el historial.</span></li>
+          <li><strong>Avisa por correo</strong><span>Envía un mensaje a cada destinatario con el PDF adjunto. Cada circular se envía una sola vez.</span></li>
+        </ol>
+      </div>
+    </section>
+
+  </div>
+</main>
+
+<footer>
+  <div class="wrap">
+    <p>Panel no oficial. Los datos se actualizan solos cuando el monitor revisa el sitio de ASFI; para confirmar cualquier norma, consulte siempre el documento en el sitio oficial de ASFI.</p>
+  </div>
+</footer>
+
+<script>
+(function () {
+  'use strict';
+
+  var ZONA = 'America/La_Paz';
+  var MESES = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+  var POR_PAGINA = 20;
+  var datos = null;
+  var esEjemplo = false;
+  var visibles = POR_PAGINA;
+
+  function $(id) { return document.getElementById(id); }
+  function el(tag, cls, texto) {
+    var n = document.createElement(tag);
+    if (cls) n.className = cls;
+    if (texto != null) n.textContent = texto;
+    return n;
+  }
+  function svgIcono(ruta, tam) {
+    var ns = 'http://www.w3.org/2000/svg';
+    var s = document.createElementNS(ns, 'svg');
+    s.setAttribute('width', tam || 16); s.setAttribute('height', tam || 16);
+    s.setAttribute('viewBox', '0 0 24 24'); s.setAttribute('fill', 'none');
+    s.setAttribute('stroke', 'currentColor'); s.setAttribute('stroke-width', '2');
+    s.setAttribute('stroke-linecap', 'round'); s.setAttribute('stroke-linejoin', 'round');
+    s.setAttribute('aria-hidden', 'true');
+    var p = document.createElementNS(ns, 'path'); p.setAttribute('d', ruta); s.appendChild(p);
+    return s;
+  }
+  var ICONO_DESCARGA = 'M12 3v12m0 0l-4-4m4 4l4-4M5 21h14';
+  var ICONO_SOBRE = 'M4 6h16v12H4zM4 7l8 6 8-6';
+
+  /* ---------- Tema ---------- */
+  function aplicarTema(t) {
+    if (t) document.documentElement.setAttribute('data-theme', t);
+    else document.documentElement.removeAttribute('data-theme');
+  }
+  try { var guardado = localStorage.getItem('tema-monitor'); if (guardado) aplicarTema(guardado); } catch (e) {}
+  $('tema').addEventListener('click', function () {
+    var actual = document.documentElement.getAttribute('data-theme');
+    var oscuroSistema = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    var esOscuro = actual ? actual === 'dark' : oscuroSistema;
+    var nuevo = esOscuro ? 'light' : 'dark';
+    aplicarTema(nuevo);
+    try { localStorage.setItem('tema-monitor', nuevo); } catch (e) {}
+  });
+
+  /* ---------- Formatos ---------- */
+  var SIGLAS = ['ASFI','EIF','ESFC','SCGF','BCB','UIF','RNSF','MCEF','IFD','PYME','SAFI','AFP','ATC','GAFI','ENIF','SPT','SPV','MYPE','NIT','NIIF','USD','UFV'];
+  function legible(texto) {
+    if (!texto) return texto;
+    if (/[a-záéíóúñ]/.test(texto)) return texto;          // ya tiene minúsculas: se respeta
+    var t = texto.toLowerCase();
+    t = t.replace(/\b[a-záéíóúñ]+\b/gi, function (w) {
+      var up = w.toUpperCase();
+      return SIGLAS.indexOf(up) !== -1 ? up : w;
+    });
+    return t.charAt(0).toUpperCase() + t.slice(1);
+  }
+  function fmtFecha(iso) {
+    if (!iso) return 'No disponible';
+    var p = iso.slice(0, 10).split('-');
+    return parseInt(p[2], 10) + ' de ' + MESES[parseInt(p[1], 10) - 1] + ' de ' + p[0];
+  }
+  function fmtFechaCorta(iso) {
+    if (!iso) return 'Sin fecha';
+    var p = iso.slice(0, 10).split('-');
+    return parseInt(p[2], 10) + ' ' + MESES[parseInt(p[1], 10) - 1].slice(0, 3) + ' ' + p[0];
+  }
+  function fmtFechaHora(iso) {
+    if (!iso) return 'Todavía no se ha revisado';
+    return new Date(iso).toLocaleString('es-BO', {
+      timeZone: ZONA, day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit'
+    });
+  }
+  function hace(iso) {
+    var seg = (new Date(iso).getTime() - Date.now()) / 1000;
+    var rtf = new Intl.RelativeTimeFormat('es', { numeric: 'auto' });
+    var abs = Math.abs(seg);
+    if (abs < 3600) return rtf.format(Math.round(seg / 60), 'minute');
+    if (abs < 86400) return rtf.format(Math.round(seg / 3600), 'hour');
+    return rtf.format(Math.round(seg / 86400), 'day');
+  }
+  function fechaOrden(c) { return (c.fecha || (c.detectada_en || '').slice(0, 10) || '0000-00-00'); }
+  function diasDesde(iso) { return (Date.now() - new Date(iso).getTime()) / 86400000; }
+  function esNueva(c) { return c.notificar && c.detectada_en && diasDesde(c.detectada_en) <= 7; }
+
+  /* ---------- Próxima revisión (aproximada) ---------- */
+  function proximaRevision(horario) {
+    if (!horario || !horario.dias || !horario.horas) return null;
+    var ahora = Date.now();
+    var DESFASE = 4 * 3600000; // Bolivia: UTC-4 todo el año
+    var base = new Date(ahora - DESFASE);
+    for (var d = 0; d < 9; d++) {
+      var y = base.getUTCFullYear(), m = base.getUTCMonth(), dia = base.getUTCDate() + d;
+      var fecha = new Date(Date.UTC(y, m, dia));
+      var dow = fecha.getUTCDay() === 0 ? 7 : fecha.getUTCDay();
+      if (horario.dias.indexOf(dow) === -1) continue;
+      for (var i = 0; i < horario.horas.length; i++) {
+        var t = Date.UTC(fecha.getUTCFullYear(), fecha.getUTCMonth(), fecha.getUTCDate(), horario.horas[i]) + DESFASE;
+        if (t > ahora) return new Date(t).toISOString();
+      }
+    }
+    return null;
+  }
+
+  /* ---------- Datos ---------- */
+  function ejemplo() {
+    var ahora = Date.now();
+    function iso(msAtras) { return new Date(ahora - msAtras).toISOString(); }
+    function dia(n) { var d = new Date(ahora - n * 86400000); return d.toISOString().slice(0, 10); }
+    var asuntos = [
+      'Ejemplo: modificaciones al reglamento de gestión de riesgos operativos',
+      'Ejemplo: actualización del manual de cuentas para entidades financieras',
+      'Ejemplo: nuevo reglamento para servicios de pago móvil',
+      'Ejemplo: ajustes al reglamento de créditos de vivienda de interés social',
+      'Ejemplo: instructivo para la remisión de información periódica',
+      'Ejemplo: modificaciones al reglamento de protección del consumidor financiero'
+    ];
+    var offs = [1, 9, 24, 47, 83, 130];
+    var lista = asuntos.map(function (a, i) {
+      var n = 921 - i;
+      return {
+        id: 'ej:' + n, fuente: 'servicios_financieros', numero: n, anio: 2026,
+        codigo: 'ASFI/' + n + '/2026', fecha: dia(offs[i] / 24 + 0.3 | 0),
+        asunto: a, paginas: [4, 12, 9, 3, 6, 15][i], tamano_kb: [210, 640, 480, 150, 290, 820][i],
+        url_original: '#', archivo: '#', detectada_en: iso(offs[i] * 3600000),
+        notificar: i < 2, correo_enviado: true
+      };
+    });
+    return {
+      generado_en: iso(0), zona_horaria: ZONA,
+      horario: { dias: [1,2,3,4,5], horas: [8,10,12,14,16,18] },
+      fuentes: [{ id: 'servicios_financieros', nombre: 'Servicios Financieros', activa: true }],
+      circulares: lista,
+      revision: { ultima: iso(35 * 60000), ultima_exitosa: iso(35 * 60000), resultado: 'ok', mensaje: '' },
+      destinatarios: ['u***@empresa.com', 'g***@empresa.com'], correo_configurado: true
+    };
+  }
+  function vacio() {
+    return {
+      generado_en: null, zona_horaria: ZONA,
+      horario: { dias: [1,2,3,4,5], horas: [8,10,12,14,16,18] },
+      fuentes: [], circulares: [],
+      revision: { ultima: null, ultima_exitosa: null, resultado: null, mensaje: '' },
+      destinatarios: [], correo_configurado: false
+    };
+  }
+
+  /* ---------- Portada ---------- */
+  function estadoMonitor(rev) {
+    if (!rev || !rev.ultima) return { nivel: '', texto: 'Sin revisiones todavía' };
+    if (rev.resultado === 'error') return { nivel: 'error', texto: 'La última revisión falló' };
+    if (diasDesde(rev.ultima) > 3) return { nivel: 'aviso', texto: 'Sin revisiones recientes' };
+    return { nivel: 'ok', texto: 'Monitor activo' };
+  }
+  function fila(dt, dd) {
+    var d = el('div'); d.appendChild(el('dt', null, dt)); d.appendChild(el('dd', null, dd)); return d;
+  }
+  function pintarPortada() {
+    var cont = $('portada');
+    cont.textContent = '';
+    var lista = datos.circulares.slice().sort(function (a, b) {
+      return fechaOrden(b) < fechaOrden(a) ? -1 : fechaOrden(b) > fechaOrden(a) ? 1 : b.numero - a.numero;
+    });
+
+    if (!lista.length) {
+      var v = el('div', 'vacio-portada');
+      v.appendChild(el('h2', null, 'Todavía no hay circulares registradas'));
+      v.appendChild(el('p', null, 'Ejecute la primera revisión desde GitHub: pestaña Actions, flujo «Monitor de circulares ASFI», botón Run workflow. Cuando termine, aquí aparecerá la circular más reciente.'));
+      var b = el('button', 'btn primario', 'Ver un ejemplo de cómo se verá');
+      b.type = 'button';
+      b.addEventListener('click', function () { esEjemplo = true; datos = ejemplo(); render(); });
+      v.appendChild(b);
+      cont.appendChild(v);
+      return;
+    }
+
+    var c = lista[0];
+    var izq = el('div', 'ultima');
+    if (esNueva(c)) izq.appendChild(el('span', 'sello', 'Nueva'));
+    izq.appendChild(el('p', 'codigo', c.codigo));
+    izq.appendChild(el('p', 'asunto', legible(c.asunto) || 'El asunto no pudo leerse automáticamente; consulte el PDF.'));
+
+    var dl = el('dl', 'datos-ultima');
+    dl.appendChild(fila('Emitida', fmtFecha(c.fecha)));
+    dl.appendChild(fila('Detectada', c.detectada_en ? hace(c.detectada_en) : '—'));
+    if (c.paginas) dl.appendChild(fila('Extensión', c.paginas + (c.paginas === 1 ? ' página' : ' páginas')));
+    izq.appendChild(dl);
+
+    var acc = el('div', 'acciones');
+    var pdf = el('a', 'btn primario');
+    pdf.appendChild(svgIcono(ICONO_DESCARGA, 18)); pdf.appendChild(document.createTextNode('Descargar PDF'));
+    if (esEjemplo) { pdf.setAttribute('aria-disabled', 'true'); pdf.href = '#'; }
+    else { pdf.href = c.archivo; pdf.setAttribute('download', ''); }
+    acc.appendChild(pdf);
+    var asfi = el('a', 'btn', 'Ver en el sitio de ASFI');
+    if (esEjemplo) { asfi.setAttribute('aria-disabled', 'true'); asfi.href = '#'; }
+    else { asfi.href = c.url_original; asfi.target = '_blank'; asfi.rel = 'noopener'; }
+    acc.appendChild(asfi);
+    izq.appendChild(acc);
+
+    var rev = datos.revision || {};
+    var est = estadoMonitor(rev);
+    var der = el('aside', 'estado');
+    der.setAttribute('data-nivel', est.nivel);
+    der.setAttribute('aria-label', 'Estado del monitor');
+    var cab = el('p', 'estado-cab'); cab.appendChild(el('span', 'punto')); cab.appendChild(el('span', null, est.texto));
+    der.appendChild(cab);
+
+    var lst = el('dl');
+    lst.appendChild(fila('Última revisión', rev.ultima ? fmtFechaHora(rev.ultima) : 'Todavía no se ha revisado'));
+    var prox = proximaRevision(datos.horario);
+    lst.appendChild(fila('Próxima revisión (aprox.)', prox ? fmtFechaHora(prox) : '—'));
+    lst.appendChild(fila('Circulares registradas', String(datos.circulares.length)));
+    var recientes = datos.circulares.filter(function (x) { return x.notificar && x.detectada_en && diasDesde(x.detectada_en) <= 30; }).length;
+    lst.appendChild(fila('Avisos en los últimos 30 días', String(recientes)));
+    der.appendChild(lst);
+    if (rev.resultado === 'error' && rev.mensaje) der.appendChild(el('p', 'detalle-error', rev.mensaje));
+
+    cont.appendChild(izq); cont.appendChild(der);
+  }
+
+  /* ---------- Historial ---------- */
+  function nombreFuente(id) {
+    var f = (datos.fuentes || []).filter(function (x) { return x.id === id; })[0];
+    return f ? f.nombre : id;
+  }
+  function filtradas() {
+    var q = $('buscar').value.trim().toLowerCase();
+    var anio = $('filtro-anio').value, fuente = $('filtro-fuente').value;
+    return datos.circulares.filter(function (c) {
+      if (anio && String(c.anio) !== anio) return false;
+      if (fuente && c.fuente !== fuente) return false;
+      if (q) {
+        var pajar = (c.codigo + ' ' + (c.asunto || '') + ' ' + legible(c.asunto || '') + ' ' + fmtFecha(c.fecha)).toLowerCase();
+        if (pajar.indexOf(q) === -1) return false;
+      }
+      return true;
+    }).sort(function (a, b) {
+      return fechaOrden(b) < fechaOrden(a) ? -1 : fechaOrden(b) > fechaOrden(a) ? 1 : b.numero - a.numero;
+    });
+  }
+  function pintarHistorial() {
+    var lista = filtradas();
+    var cuerpo = $('filas');
+    cuerpo.textContent = '';
+    var muestra = lista.slice(0, visibles);
+    var mostrarFuente = (datos.fuentes || []).filter(function (f) { return f.activa; }).length > 1;
+
+    muestra.forEach(function (c) {
+      var tr = el('tr');
+      var t1 = el('td', 'c-codigo'); t1.appendChild(el('span', 'num', c.codigo));
+      if (esNueva(c)) t1.appendChild(el('span', 'mini', 'Nueva'));
+      var t2 = el('td', 'c-fecha', fmtFechaCorta(c.fecha));
+      var t3 = el('td', 'c-asunto', legible(c.asunto) || 'Asunto no disponible; consulte el PDF.');
+      if (mostrarFuente) t3.appendChild(el('span', 'fuente', nombreFuente(c.fuente)));
+      var t4 = el('td', 'c-pdf');
+      var a = el('a', 'enlace-pdf');
+      a.appendChild(svgIcono(ICONO_DESCARGA, 15)); a.appendChild(document.createTextNode('PDF'));
+      a.setAttribute('aria-label', 'Descargar PDF de la circular ' + c.codigo);
+      if (esEjemplo) { a.href = '#'; a.setAttribute('aria-disabled', 'true'); }
+      else { a.href = c.archivo; a.setAttribute('download', ''); }
+      t4.appendChild(a);
+      [t1, t2, t3, t4].forEach(function (t) { tr.appendChild(t); });
+      cuerpo.appendChild(tr);
+    });
+
+    if (!muestra.length) {
+      var tr = el('tr'); var td = el('td', 'vacio-tabla',
+        datos.circulares.length ? 'Ninguna circular coincide con la búsqueda. Pruebe con otro número o palabra.' : 'Aún no hay circulares en el historial.');
+      td.colSpan = 4; tr.appendChild(td); cuerpo.appendChild(tr);
+    }
+    var total = lista.length;
+    $('conteo').textContent = total ? 'Mostrando ' + muestra.length + ' de ' + total + (total === 1 ? ' circular' : ' circulares') : '';
+    var mas = $('mas');
+    mas.hidden = muestra.length >= total;
+    $('tabla-pie').hidden = !total;
+  }
+
+  function prepararFiltros() {
+    var anios = {};
+    datos.circulares.forEach(function (c) { anios[c.anio] = true; });
+    var sel = $('filtro-anio'); sel.textContent = '';
+    sel.appendChild(new Option('Todos los años', ''));
+    Object.keys(anios).sort().reverse().forEach(function (a) { sel.appendChild(new Option(a, a)); });
+    var fs = (datos.fuentes || []).filter(function (f) { return f.activa; });
+    $('campo-fuente').hidden = fs.length < 2;
+    var sf = $('filtro-fuente'); sf.textContent = '';
+    sf.appendChild(new Option('Todas las fuentes', ''));
+    fs.forEach(function (f) { sf.appendChild(new Option(f.nombre, f.id)); });
+  }
+
+  /* ---------- Información ---------- */
+  function pintarInfo() {
+    var ul = $('destinatarios'); ul.textContent = '';
+    var dest = datos.destinatarios || [];
+    dest.forEach(function (d) {
+      var li = el('li'); li.appendChild(svgIcono(ICONO_SOBRE, 18)); li.appendChild(el('span', null, d)); ul.appendChild(li);
+    });
+    $('nota-dest').textContent = dest.length
+      ? 'Las direcciones se muestran parcialmente ocultas. Se cambian en los Secrets del repositorio (DESTINATARIOS).'
+      : 'Todavía no hay destinatarios configurados. Agréguelos en el secreto DESTINATARIOS del repositorio de GitHub.';
+    var h = datos.horario;
+    if (h && h.horas && h.horas.length) {
+      var ini = Math.min.apply(null, h.horas), fin = Math.max.apply(null, h.horas);
+      var solo = h.dias.join(',') === '1,2,3,4,5' ? 'de lunes a viernes' : 'en los días configurados';
+      $('txt-frecuencia').textContent = h.horas.length + ' veces al día, ' + solo + ', entre las ' + ini + ':00 y las ' + fin + ':00 (hora de Bolivia).';
+    }
+  }
+
+  function render() {
+    visibles = POR_PAGINA;
+    $('aviso-ejemplo').hidden = !esEjemplo;
+    $('buscar').value = '';
+    prepararFiltros();
+    pintarPortada();
+    pintarHistorial();
+    pintarInfo();
+  }
+
+  /* ---------- Eventos ---------- */
+  var temporizador;
+  $('buscar').addEventListener('input', function () {
+    clearTimeout(temporizador);
+    temporizador = setTimeout(function () { visibles = POR_PAGINA; pintarHistorial(); }, 120);
+  });
+  ['filtro-anio', 'filtro-fuente'].forEach(function (id) {
+    $(id).addEventListener('change', function () { visibles = POR_PAGINA; pintarHistorial(); });
+  });
+  $('mas').addEventListener('click', function () { visibles += POR_PAGINA; pintarHistorial(); });
+  $('salir-ejemplo').addEventListener('click', function () { esEjemplo = false; datos = window.MONITOR_DATOS || vacio(); render(); });
+
+  /* ---------- Arranque ---------- */
+  var script = document.createElement('script');
+  script.src = 'datos/datos.js?v=' + Date.now();
+  script.onload = script.onerror = function () {
+    datos = window.MONITOR_DATOS || vacio();
+    if (!datos.circulares) datos.circulares = [];
+    render();
+  };
+  document.head.appendChild(script);
+})();
+</script>
+</body>
+</html>

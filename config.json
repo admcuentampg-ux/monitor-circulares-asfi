@@ -1,0 +1,29 @@
+{
+  "fuentes": [
+    {
+      "id": "servicios_financieros",
+      "nombre": "Servicios Financieros",
+      "activa": true,
+      "url_base": "https://servdmzw.asfi.gob.bo/circular/Circulares/ASFI_{numero}.pdf",
+      "numero_inicial": 910
+    },
+    {
+      "id": "mercado_valores",
+      "nombre": "Mercado de Valores",
+      "activa": false,
+      "url_base": "https://servdmzw.asfi.gob.bo/CircularValores/Circulares/ASFI_{numero}.pdf",
+      "numero_inicial": 870
+    }
+  ],
+  "huecos_tolerados": 2,
+  "pausa_segundos": 1.0,
+  "verificar_ssl": "auto",
+  "alerta_tras_fallos": 3,
+  "zona_horaria": "America/La_Paz",
+  "remitente_nombre": "Monitor de Circulares ASFI",
+  "asunto_prefijo": "[ASFI]",
+  "horario": {
+    "dias": [1, 2, 3, 4, 5],
+    "horas": [8, 10, 12, 14, 16, 18]
+  }
+}
