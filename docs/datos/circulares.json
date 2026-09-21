@@ -1,0 +1,14 @@
+{
+  "version": 1,
+  "fuentes": {},
+  "circulares": [],
+  "activacion_enviada": false,
+  "revision": {
+    "ultima": "2026-09-21T18:41:06-04:00",
+    "ultima_exitosa": null,
+    "resultado": "error",
+    "mensaje": "Servicios Financieros: No se pudo conectar con ASFI (ConnectTimeout)",
+    "fallos_consecutivos": 1,
+    "alerta_enviada": false
+  }
+}
