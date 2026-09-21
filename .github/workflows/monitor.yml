@@ -1,0 +1,78 @@
+name: Monitor de circulares ASFI
+
+on:
+  schedule:
+    # Cada 2 horas, de lunes a viernes, de 08:00 a 18:00 hora de Bolivia (UTC-4).
+    # GitHub usa hora UTC. Si cambia estas horas, actualice también "horario" en config.json.
+    - cron: "0 12,14,16,18,20,22 * * 1-5"
+  workflow_dispatch:
+    inputs:
+      modo:
+        description: "Qué desea hacer"
+        type: choice
+        default: revisar
+        options:
+          - revisar
+          - probar_correo
+
+permissions:
+  contents: write
+
+concurrency:
+  group: monitor-circulares
+  cancel-in-progress: false
+
+jobs:
+  revisar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Descargar el proyecto
+        uses: actions/checkout@v4
+
+      - name: Preparar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Instalar dependencias
+        run: pip install -r requirements.txt
+
+      - name: Revisar circulares nuevas
+        id: monitor
+        continue-on-error: true
+        env:
+          SMTP_USUARIO: ${{ secrets.SMTP_USUARIO }}
+          SMTP_CLAVE: ${{ secrets.SMTP_CLAVE }}
+          DESTINATARIOS: ${{ secrets.DESTINATARIOS }}
+          SMTP_SERVIDOR: ${{ secrets.SMTP_SERVIDOR }}
+          SMTP_PUERTO: ${{ secrets.SMTP_PUERTO }}
+          URL_PANEL: ${{ vars.URL_PANEL }}
+          MODO: ${{ github.event.inputs.modo }}
+        run: |
+          if [ "$MODO" = "probar_correo" ]; then
+            python monitor.py --probar-correo
+          else
+            python monitor.py
+          fi
+
+      - name: Guardar historial y PDF descargados
+        if: always()
+        run: |
+          git config user.name "monitor-circulares"
+          git config user.email "monitor-circulares@users.noreply.github.com"
+          git add docs
+          if git diff --cached --quiet; then
+            echo "Sin cambios que guardar."
+          else
+            git commit -m "Actualización automática del monitor"
+            git pull --rebase --autostash
+            git push
+          fi
+
+      - name: Marcar la ejecución como fallida si el correo no salió
+        if: steps.monitor.outcome == 'failure'
+        run: |
+          echo "El monitor terminó con errores. Revise el paso 'Revisar circulares nuevas'."
+          exit 1
