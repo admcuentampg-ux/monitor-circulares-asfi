@@ -1,5 +1,5 @@
 window.MONITOR_DATOS = {
-  "generado_en": "2026-09-30T08:12:22-04:00",
+  "generado_en": "2026-09-30T10:12:58-04:00",
   "zona_horaria": "America/La_Paz",
   "horario": {
     "dias": [
@@ -32,7 +32,7 @@ window.MONITOR_DATOS = {
   ],
   "circulares": [],
   "revision": {
-    "ultima": "2026-09-30T08:12:22-04:00",
+    "ultima": "2026-09-30T10:12:58-04:00",
     "ultima_exitosa": null,
     "resultado": "error",
     "mensaje": "Servicios Financieros: No se pudo conectar con ASFI (ConnectTimeout)"
