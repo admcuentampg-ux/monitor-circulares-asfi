@@ -4,11 +4,11 @@
   "circulares": [],
   "activacion_enviada": false,
   "revision": {
-    "ultima": "2026-11-25T23:55:10-04:00",
+    "ultima": "2026-11-26T16:53:10-04:00",
     "ultima_exitosa": null,
     "resultado": "error",
     "mensaje": "Servicios Financieros: No se pudo conectar con ASFI (ConnectTimeout)",
-    "fallos_consecutivos": 189,
+    "fallos_consecutivos": 190,
     "alerta_enviada": false
   }
 }
